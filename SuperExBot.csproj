@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NLog" Version="5.3.2" />
+    <PackageReference Include="RestSharp" Version="108.0.3" />
+    <PackageReference Include="Spectre.Console" Version="0.49.1" />
+    <PackageReference Include="TA-Lib" Version="0.5.0.3" />
+    <PackageReference Include="Trady.Analysis" Version="3.2.8" />
+    <PackageReference Include="Trady.Core" Version="3.2.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Logs">
+      <HintPath>..\TerminatorTelegram\Logs\bin\Debug\Logs.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

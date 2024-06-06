@@ -1,0 +1,12 @@
+{
+  "ApiKey": "",
+  "Secret": "",
+  "Symbol": "",
+  "TimeFrame": "300",
+  "IslemTipi": "1",
+  "Quantity": "5",
+  "Ema1": "5",
+  "Ema2": "8"
+  //60 = 1m, 300 = 5m, 900 = 15m, 1800 = 30m, 3600 = 1h, 14400 = 4h, 43200 = 12h, 86400 = 1d, 604800 = 3d
+  //Islem Tipi = 1 (Ema8/Ema5 Kurgusudur) Islem Tipi = 2 (Mevcut Hacim Bir Önce ki Hacimden Kontrol Edilerek İşlem yapılıyor)
+}
