@@ -37,7 +37,7 @@ namespace SuperExBot
 
             var candlesticks = candlestick.Where(x => Program.StartUnixTime.AddMilliseconds(x.OpenTime).ToUniversalTime() < DateTime.Now.ToUniversalTime()).ToArray();
 
-            if (candlesticks.Count() <= 60)
+            if (candlesticks.Count() <= 36)
                 return;
 
             List<IOhlcv> tradyCandles = candlesticks.Select(candle => new Candle(Program.StartUnixTime.AddMilliseconds(candle.OpenTime).ToUniversalTime(), candle.Open, candle.High, candle.Low, candle.Close, candle.Volume)).Cast<IOhlcv>().ToList();
