@@ -27,275 +27,294 @@ namespace SuperExBot
         public static IslemSonucu Sonuclar { get; set; }
         public static void Main(string[] args)
         {
-            ApiInformationLoading();
-
-            CandlestickList = new List<Candlestick>();
-            CandlestickList.Clear();
-
-            QueryKline(ApiKey, Symbol, Interval, 1500);
-
-            var candlestick = CandlestickList.ToList();
-
-            var candlesticks = candlestick.Where(x => Program.StartUnixTime.AddMilliseconds(x.OpenTime).ToUniversalTime() < DateTime.Now.ToUniversalTime()).ToArray();
-
-            if (candlesticks.Count() <= 12)
-                return;
-
-            List<IOhlcv> tradyCandles = candlesticks.Select(candle => new Candle(Program.StartUnixTime.AddMilliseconds(candle.OpenTime).ToUniversalTime(), candle.Open, candle.High, candle.Low, candle.Close, candle.Volume)).Cast<IOhlcv>().ToList();
-
-            List<decimal?> Ema1 = new List<decimal?>();
-            List<decimal?> Ema2 = new List<decimal?>();
-            List<string> BuyList = new List<string>();
-
-            Ema1 = Logs.Analysis.EmaHesaplama(tradyCandles, dEma1);
-            Ema2 = Logs.Analysis.EmaHesaplama(tradyCandles, dEma2);
-
-            List<bool?> longCond = new List<bool?>();
-            List<bool?> shortCond = new List<bool?>();
-            List<bool?> longCondition = new List<bool?>();
-            List<bool?> shortCondition = new List<bool?>();
-            List<int?> CondIni = new List<int?>();
-
-            longCondition.Add(false);
-            shortCondition.Add(false);
-
-            longCond.Add(false);
-            shortCond.Add(false);
-
-            int dContIni = 0;
-            CondIni.Add(0);
-
-            string strDurum = "-";
-
-            longCond = CrossoverDegerler(Ema1, Ema2);
-            shortCond = CrossunderDegerler(Ema1, Ema2);
-
-            for (int i = 1; i < longCond.Count; i++)
+            if (System.Diagnostics.Process.GetProcessesByName("SuperExBot").Length == 1)
             {
-                dContIni = longCond[i].Value ? 1 : shortCond[i].Value ? -1 : CondIni[i - 1].Value;
-                CondIni.Add(dContIni);
-            }
+                ApiInformationLoading();
 
-            for (int i = 1; i < CondIni.Count; i++)
-            {
-                bool blnLongs = longCond[i].Value && CondIni[i - 1].Value == -1;
-                bool blnShorts = shortCond[i].Value && CondIni[i - 1].Value == 1;
+                CandlestickList = new List<Candlestick>();
+                CandlestickList.Clear();
 
-                longCondition.Add(blnLongs);
-                shortCondition.Add(blnShorts);
-            }
+                QueryKline(ApiKey, Symbol, Interval, 1500);
 
-            for (int i = 0; i < longCondition.Count; i++)
-            {
-                bool blnBuy = longCondition[i].Value;
-                bool blnSell = shortCondition[i].Value;
-                string strDate = tradyCandles[i].DateTime.ToString();
-                if (blnBuy)
+                var candlestick = CandlestickList.ToList();
+
+                var candlesticks = candlestick.Where(x => Program.StartUnixTime.AddMilliseconds(x.OpenTime).ToUniversalTime() < DateTime.Now.ToUniversalTime()).ToArray();
+
+                //if (candlesticks.Count() <= 12)
+                //    return;
+
+                List<IOhlcv> tradyCandles = candlesticks.Select(candle => new Candle(Program.StartUnixTime.AddMilliseconds(candle.OpenTime).ToUniversalTime(), candle.Open, candle.High, candle.Low, candle.Close, candle.Volume)).Cast<IOhlcv>().ToList();
+
+                List<decimal?> Ema1 = new List<decimal?>();
+                List<decimal?> Ema2 = new List<decimal?>();
+                List<string> BuyList = new List<string>();
+
+                Ema1 = Logs.Analysis.EmaHesaplama(tradyCandles, dEma1);
+                Ema2 = Logs.Analysis.EmaHesaplama(tradyCandles, dEma2);
+
+                List<bool?> longCond = new List<bool?>();
+                List<bool?> shortCond = new List<bool?>();
+                List<bool?> longCondition = new List<bool?>();
+                List<bool?> shortCondition = new List<bool?>();
+                List<int?> CondIni = new List<int?>();
+
+                longCondition.Add(false);
+                shortCondition.Add(false);
+
+                longCond.Add(false);
+                shortCond.Add(false);
+
+                int dContIni = 0;
+                CondIni.Add(0);
+
+                string strDurum = "-";
+
+                longCond = CrossoverDegerler(Ema1, Ema2);
+                shortCond = CrossunderDegerler(Ema1, Ema2);
+
+                for (int i = 1; i < longCond.Count; i++)
                 {
-                    strDurum = "BUY";// - " + strDate;
-                    BuyList.Add(strDurum);
+                    dContIni = longCond[i].Value ? 1 : shortCond[i].Value ? -1 : CondIni[i - 1].Value;
+                    CondIni.Add(dContIni);
                 }
-                else if (blnSell)
+
+                for (int i = 1; i < CondIni.Count; i++)
                 {
-                    strDurum = "SELL";// - " + strDate;
-                    BuyList.Add(strDurum);
+                    bool blnLongs = longCond[i].Value && CondIni[i - 1].Value == -1;
+                    bool blnShorts = shortCond[i].Value && CondIni[i - 1].Value == 1;
+
+                    longCondition.Add(blnLongs);
+                    shortCondition.Add(blnShorts);
                 }
-                else
+
+                for (int i = 0; i < longCondition.Count; i++)
                 {
-                    strDurum = "-";
-                    BuyList.Add(strDurum);
-                }
-            }
-
-            string strStatus = BuyList[BuyList.Count - 1].ToString();
-
-            string[] strCoinMinQty = tradyCandles[tradyCandles.Count - 1].Close.ToString().Split(',');
-            //string strCoinMiktarAra = strCoinMinQty.Length > 1 ? strCoinMinQty[1].Length : strCoinMinQty[0].Length;
-            int dRound = strCoinMinQty.Length > 1 ? strCoinMinQty[1].Length : strCoinMinQty[0].Length;
-
-            if (IslemTipi == "1")    
-            {
-                CancelAllOrder(ApiKey, Symbol);
-
-                for (int c = 0; c < 2; c++)
-                {
-                    if (c == 0)
+                    bool blnBuy = longCondition[i].Value;
+                    bool blnSell = shortCondition[i].Value;
+                    string strDate = tradyCandles[i].DateTime.ToString();
+                    if (blnBuy)
                     {
-                        string strPadLeft = "0";
-                        string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
-                        int a = 5;
+                        strDurum = "BUY";// - " + strDate;
+                        BuyList.Add(strDurum);
+                    }
+                    else if (blnSell)
+                    {
+                        strDurum = "SELL";// - " + strDate;
+                        BuyList.Add(strDurum);
+                    }
+                    else
+                    {
+                        strDurum = "-";
+                        BuyList.Add(strDurum);
+                    }
+                }
 
-                        decimal flQuantity = Convert.ToDecimal(Quantity) / tradyCandles[tradyCandles.Count - 1].Close;
+                string strStatus = BuyList[BuyList.Count - 1].ToString();
 
-                        GetOrderBook(ApiKey, Symbol);
+                string[] strCoinMinQty = tradyCandles[tradyCandles.Count - 1].Close.ToString().Split(',');
+                //string strCoinMiktarAra = strCoinMinQty.Length > 1 ? strCoinMinQty[1].Length : strCoinMinQty[0].Length;
+                int dRound = strCoinMinQty.Length > 1 ? strCoinMinQty[1].Length : strCoinMinQty[0].Length;
 
-                        decimal flOrders = Convert.ToDecimal(OrdersBooks.data.bids[0][0].ToString());
+                if (IslemTipi == "1")
+                {
+                    CancelAllOrder(ApiKey, Symbol);
 
-                        for (int i = 5; i < 10; i++)
+                    for (int c = 0; c < 2; c++)
+                    {
+                        if (c == 0)
                         {
+                            string strPadLeft = "0";
+                            string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
+                            int a = 5;
+
+                            decimal flQuantity = Convert.ToDecimal(Quantity) / tradyCandles[tradyCandles.Count - 1].Close;
+
+                            GetOrderBook(ApiKey, Symbol);
+
+                            decimal flOrders = Convert.ToDecimal(OrdersBooks.data.bids[0][0].ToString());
+
+                            for (int i = 5; i < 10; i++)
+                            {
+                                decimal flIslem = 0;
+
+                                if (i != 5)
+                                {
+                                    string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                                    flIslem = Convert.ToDecimal(strIslems);
+                                }
+                                else
+                                {
+                                    string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                                    flIslem = Convert.ToDecimal(strIslems);
+                                }
+
+                                strIslem = flIslem.ToString();
+
+                                decimal flCikarim = Convert.ToDecimal(strIslem);
+                                decimal flSonuc = flOrders - flCikarim;
+                                a++;
+
+                                SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
+                            }
+                        }
+                        else
+                        {
+                            string strPadLeft = "0";
+                            string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
+                            int a = 5;
+
+                            decimal flQuantity = Convert.ToDecimal(Quantity) / tradyCandles[tradyCandles.Count - 1].Close;
+
+                            GetOrderBook(ApiKey, Symbol);
+
+                            decimal flOrders = Convert.ToDecimal(OrdersBooks.data.asks[0][0].ToString());
+
+                            for (int i = 5; i < 10; i++)
+                            {
+                                decimal flIslem = 0;
+
+                                if (i != 5)
+                                {
+                                    string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                                    flIslem = Convert.ToDecimal(strIslems);
+                                }
+                                else
+                                {
+                                    string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                                    flIslem = Convert.ToDecimal(strIslems);
+                                }
+
+                                strIslem = flIslem.ToString();
+
+                                decimal flCikarim = Convert.ToDecimal(strIslem);
+                                decimal flSonuc = flOrders + flCikarim;
+                                a++;
+
+                                SubmitOrder(ApiKey, Symbol, 2, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
+                            }
+                        }
+                    }
+                }
+                else if (IslemTipi == "2")
+                {
+                    //strStatus = tradyCandles[tradyCandles.Count - 1].Volume >= tradyCandles[tradyCandles.Count - 2].Volume ? "BUY" : "SELL";
+                    bool blnWhile = true;
+                    while (blnWhile)
+                    {
+                        try
+                        {
+                            Console.WriteLine("Mevcut Order Verileri Silindi");
+                            CancelAllOrder(ApiKey, Symbol);
+
+                            string strPadLeft = "0";
+                            string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
+                            int a = 1;
+
+                            Console.WriteLine("Order Verileri Getirildi");
+                            GetOrderBook(ApiKey, Symbol);
+                            decimal flOrders = Convert.ToDecimal(OrdersBooks.data.asks[0][0].ToString());
+                            decimal flQuantity = Convert.ToDecimal(Quantity) / flOrders;
+                            flQuantity = Math.Round(flQuantity, 0);
                             decimal flIslem = 0;
 
-                            if (i != 5)
-                            {
-                                string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
-                                flIslem = Convert.ToDecimal(strIslems);
-                            }
-                            else
-                            {
-                                string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
-                                flIslem = Convert.ToDecimal(strIslems);
-                            }
+
+                            string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                            flIslem = Convert.ToDecimal(strIslems);
 
                             strIslem = flIslem.ToString();
 
                             decimal flCikarim = Convert.ToDecimal(strIslem);
                             decimal flSonuc = flOrders - flCikarim;
-                            a++;
-
-                            SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                        }
-                    }
-                    else
-                    {
-                        string strPadLeft = "0";
-                        string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
-                        int a = 5;
-
-                        decimal flQuantity = Convert.ToDecimal(Quantity) / tradyCandles[tradyCandles.Count - 1].Close;
-
-                        GetOrderBook(ApiKey, Symbol);
-
-                        decimal flOrders = Convert.ToDecimal(OrdersBooks.data.asks[0][0].ToString());
-
-                        for (int i = 5; i < 10; i++)
-                        {
-                            decimal flIslem = 0;
-
-                            if (i != 5)
-                            {
-                                string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
-                                flIslem = Convert.ToDecimal(strIslems);
-                            }
-                            else
-                            {
-                                string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
-                                flIslem = Convert.ToDecimal(strIslems);
-                            }
-
-                            strIslem = flIslem.ToString();
-
-                            decimal flCikarim = Convert.ToDecimal(strIslem);
-                            decimal flSonuc = flOrders + flCikarim;
-                            a++;
-
+                            Console.WriteLine("Order Girildi - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
                             SubmitOrder(ApiKey, Symbol, 2, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
+                            Thread.Sleep(10);
+                            Console.WriteLine("Order Tamamlandı - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
+                            SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
+                            Thread.Sleep(15000);
+                            Console.Clear();
+                        }
+                        catch (Exception ex)
+                        {
+                            blnWhile = false;
+                            Log.Error("Çalışma sırasında beklenmedik hata oluştu. Detay:\n{Exception}", ex.Message.ToString());
                         }
                     }
+                    #region Formül Kapandı
+                    //for (int c = 0; c < 2; c++)
+                    //{
+                    //    if (c == 0)
+                    //    {
+                    //        string strPadLeft = "0";
+                    //        string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
+                    //        int a = 5;
+
+                    //        decimal flQuantity = Convert.ToDecimal(Quantity) / tradyCandles[tradyCandles.Count - 1].Close;
+
+                    //        GetOrderBook(ApiKey, Symbol);
+                    //        decimal flOrders = Convert.ToDecimal(OrdersBooks.data.bids[0][0].ToString());
+
+                    //        for (int i = 5; i < 10; i++)
+                    //        {
+                    //            decimal flIslem = 0;
+
+                    //            if (i != 5)
+                    //            {
+                    //                string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                    //                flIslem = Convert.ToDecimal(strIslems);
+                    //            }
+                    //            else
+                    //            {
+                    //                string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                    //                flIslem = Convert.ToDecimal(strIslems);
+                    //            }
+
+                    //            strIslem = flIslem.ToString();
+
+                    //            decimal flCikarim = Convert.ToDecimal(strIslem);
+                    //            decimal flSonuc = flOrders - flCikarim;
+                    //            a++;
+
+                    //            SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
+                    //        }
+                    //    }
+                    //    else
+                    //    {
+                    //        string strPadLeft = "0";
+                    //        string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
+                    //        int a = 1;
+
+                    //        decimal flQuantity = Convert.ToDecimal(Quantity) / tradyCandles[tradyCandles.Count - 1].Close;
+
+                    //        GetOrderBook(ApiKey, Symbol);
+                    //        decimal flOrders = Convert.ToDecimal(OrdersBooks.data.asks[0][0].ToString());
+
+                    //        decimal flIslem = 0;
+
+                    //        //if (i != 5)
+                    //        //{
+                    //        string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                    //        flIslem = Convert.ToDecimal(strIslems);
+                    //        //}
+                    //        //else
+                    //        //{
+                    //        //    string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                    //        //    flIslem = Convert.ToDecimal(strIslems);
+                    //        //}
+
+                    //        strIslem = flIslem.ToString();
+
+                    //        decimal flCikarim = Convert.ToDecimal(strIslem);
+                    //        decimal flSonuc = flOrders - flCikarim;
+                    //        //a++;
+
+                    //        SubmitOrder(ApiKey, Symbol, 2, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
+                    //        Thread.Sleep(20);
+                    //        SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
+                    //    }
+                    //}
+
+                    #endregion
                 }
-            }
-            else if (IslemTipi == "2")
-            {
-                strStatus = tradyCandles[tradyCandles.Count - 1].Volume >= tradyCandles[tradyCandles.Count - 2].Volume ? "BUY" : "SELL";
-
-                CancelAllOrder(ApiKey, Symbol);
-
-                string strPadLeft = "0";
-                string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
-                int a = 1;
-
-                GetOrderBook(ApiKey, Symbol);
-                decimal flOrders = Convert.ToDecimal(OrdersBooks.data.asks[0][0].ToString());
-                decimal flQuantity = Convert.ToDecimal(Quantity) / flOrders;
-                decimal flIslem = 0;
-
-
-                string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
-                flIslem = Convert.ToDecimal(strIslems);
-
-                strIslem = flIslem.ToString();
-
-                decimal flCikarim = Convert.ToDecimal(strIslem);
-                decimal flSonuc = flOrders - flCikarim;
-
-                SubmitOrder(ApiKey, Symbol, 2, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                Thread.Sleep(10);
-                SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-
-                #region Formül Kapandı
-                //for (int c = 0; c < 2; c++)
-                //{
-                //    if (c == 0)
-                //    {
-                //        string strPadLeft = "0";
-                //        string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
-                //        int a = 5;
-
-                //        decimal flQuantity = Convert.ToDecimal(Quantity) / tradyCandles[tradyCandles.Count - 1].Close;
-
-                //        GetOrderBook(ApiKey, Symbol);
-                //        decimal flOrders = Convert.ToDecimal(OrdersBooks.data.bids[0][0].ToString());
-
-                //        for (int i = 5; i < 10; i++)
-                //        {
-                //            decimal flIslem = 0;
-
-                //            if (i != 5)
-                //            {
-                //                string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
-                //                flIslem = Convert.ToDecimal(strIslems);
-                //            }
-                //            else
-                //            {
-                //                string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
-                //                flIslem = Convert.ToDecimal(strIslems);
-                //            }
-
-                //            strIslem = flIslem.ToString();
-
-                //            decimal flCikarim = Convert.ToDecimal(strIslem);
-                //            decimal flSonuc = flOrders - flCikarim;
-                //            a++;
-
-                //            SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                //        }
-                //    }
-                //    else
-                //    {
-                //        string strPadLeft = "0";
-                //        string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
-                //        int a = 1;
-
-                //        decimal flQuantity = Convert.ToDecimal(Quantity) / tradyCandles[tradyCandles.Count - 1].Close;
-
-                //        GetOrderBook(ApiKey, Symbol);
-                //        decimal flOrders = Convert.ToDecimal(OrdersBooks.data.asks[0][0].ToString());
-
-                //        decimal flIslem = 0;
-
-                //        //if (i != 5)
-                //        //{
-                //        string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
-                //        flIslem = Convert.ToDecimal(strIslems);
-                //        //}
-                //        //else
-                //        //{
-                //        //    string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
-                //        //    flIslem = Convert.ToDecimal(strIslems);
-                //        //}
-
-                //        strIslem = flIslem.ToString();
-
-                //        decimal flCikarim = Convert.ToDecimal(strIslem);
-                //        decimal flSonuc = flOrders - flCikarim;
-                //        //a++;
-
-                //        SubmitOrder(ApiKey, Symbol, 2, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                //        Thread.Sleep(20);
-                //        SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                //    }
-                //}
-
-                #endregion
             }
         }
         public static void CancelAllOrder(string strApiKey, string strSembol)
