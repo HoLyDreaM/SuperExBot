@@ -230,7 +230,7 @@ namespace SuperExBot
                             Thread.Sleep(10);
                             Console.WriteLine("Order Tamamlandı - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
                             SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                            Thread.Sleep(15000);
+                            Thread.Sleep(10);
                             Console.Clear();
                         }
                         catch (Exception ex)
