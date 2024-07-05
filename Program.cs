@@ -346,10 +346,10 @@ namespace SuperExBot
                             decimal flSonuc = flOrders + flCikarim;
                             Console.WriteLine("Order Girildi - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
                             SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                            Thread.Sleep(2);
+                            Thread.Sleep(8);
                             Console.WriteLine("Order Tamamlandı - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
                             SubmitOrder(ApiKey, Symbol, 2, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                            Thread.Sleep(2);
+                            Thread.Sleep(8);
                             Console.Clear();
                         }
                         catch (Exception ex)
