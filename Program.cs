@@ -315,6 +315,50 @@ namespace SuperExBot
 
                     #endregion
                 }
+                else if(IslemTipi == "3")
+                {
+                    bool blnWhile = true;
+                    while (blnWhile)
+                    {
+                        try
+                        {
+                            Console.WriteLine("Mevcut Order Verileri Silindi");
+                            CancelAllOrder(ApiKey, Symbol);
+
+                            string strPadLeft = "0";
+                            string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
+                            int a = 1;
+
+                            Console.WriteLine("Order Verileri Getirildi");
+                            GetOrderBook(ApiKey, Symbol);
+                            decimal flOrders = Convert.ToDecimal(OrdersBooks.data.bids[0][0].ToString());
+                            decimal flQuantity = Convert.ToDecimal(Quantity) / flOrders;
+                            flQuantity = Math.Round(flQuantity, 0);
+                            decimal flIslem = 0;
+
+
+                            string strIslems = "0," + strPadLeft.PadRight(dRound - 1, '0') + a.ToString();
+                            flIslem = Convert.ToDecimal(strIslems);
+
+                            strIslem = flIslem.ToString();
+
+                            decimal flCikarim = Convert.ToDecimal(strIslem);
+                            decimal flSonuc = flOrders + flCikarim;
+                            Console.WriteLine("Order Girildi - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
+                            SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
+                            Thread.Sleep(2);
+                            Console.WriteLine("Order Tamamlandı - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
+                            SubmitOrder(ApiKey, Symbol, 2, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
+                            Thread.Sleep(2);
+                            Console.Clear();
+                        }
+                        catch (Exception ex)
+                        {
+                            blnWhile = false;
+                            Log.Error("Çalışma sırasında beklenmedik hata oluştu. Detay:\n{Exception}", ex.Message.ToString());
+                        }
+                    }
+                }
             }
         }
         public static void CancelAllOrder(string strApiKey, string strSembol)
