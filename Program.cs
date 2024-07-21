@@ -204,7 +204,7 @@ namespace SuperExBot
                         try
                         {
                             Console.WriteLine("Mevcut Order Verileri Silindi");
-                            CancelAllOrder(ApiKey, Symbol);
+                            //CancelAllOrder(ApiKey, Symbol);
 
                             string strPadLeft = "0";
                             string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
@@ -227,7 +227,7 @@ namespace SuperExBot
                             decimal flSonuc = flOrders - flCikarim;
                             Console.WriteLine("Order Girildi - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
                             SubmitOrder(ApiKey, Symbol, 2, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                            Thread.Sleep(8);
+                            //Thread.Sleep(8);
                             Console.WriteLine("Order Tamamlandı - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
                             SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
                             Thread.Sleep(8);
@@ -323,7 +323,7 @@ namespace SuperExBot
                         try
                         {
                             Console.WriteLine("Mevcut Order Verileri Silindi");
-                            CancelAllOrder(ApiKey, Symbol);
+                            //CancelAllOrder(ApiKey, Symbol);
 
                             string strPadLeft = "0";
                             string strIslem = "0," + strPadLeft.PadRight(dRound, '0');
@@ -346,7 +346,7 @@ namespace SuperExBot
                             decimal flSonuc = flOrders + flCikarim;
                             Console.WriteLine("Order Girildi - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
                             SubmitOrder(ApiKey, Symbol, 1, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
-                            Thread.Sleep(8);
+                            //Thread.Sleep(8);
                             Console.WriteLine("Order Tamamlandı - Adet : " + flQuantity + " - Fiyat : " + flSonuc.ToString());
                             SubmitOrder(ApiKey, Symbol, 2, Convert.ToInt32(flQuantity).ToString(), Math.Round(flSonuc, dRound).ToString());
                             Thread.Sleep(8);
